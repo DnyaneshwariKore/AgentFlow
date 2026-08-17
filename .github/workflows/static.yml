@@ -2,42 +2,49 @@
 name: Deploy static content to Pages
 
 on:
-  # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  # Single deploy job since we're just deploying
-  deploy:
+  build-and-deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/checkout@eab52f82e78fc4ee2cbd8c57eb82a670e372b05e
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@60edb5dd545a775cbe2231b3c3f13471838de0b6
         with:
-          # Upload entire repository
-          path: '.'
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build project
+        run: npm run build
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@983d7736951b90b00b1afe09ec75844f7aee4d46
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@6673cd052c4cd6fcf4b4e6d7d86e0798fa12c9b3
+        with:
+          path: './dist'
+      
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@d6db90164830504fb2b417f69f27fc9e2042d463
